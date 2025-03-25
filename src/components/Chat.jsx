@@ -14,13 +14,13 @@ const Chat = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const messageToSend = input; // Guardamos el mensaje
-    // Agregamos el mensaje del usuario y limpiamos el input de inmediato
+    const messageToSend = input;
+    // Agregar el mensaje del usuario y limpiar el input inmediatamente
     setMessages((prev) => [
       ...prev,
       { sender: 'user', text: messageToSend }
     ]);
-    setInput(''); // Limpieza inmediata del campo
+    setInput(''); 
 
     const payload = { message: messageToSend };
 
@@ -33,7 +33,12 @@ const Chat = () => {
       const data = await response.json();
 
       if (data.success) {
-        const systemMessage = { sender: 'system', text: data.message };
+        // Si se devuelve data, se incluye en el mensaje del sistema
+        const systemMessage = { 
+          sender: 'system', 
+          text: data.message,
+          data: (data.data && data.data.length > 0) ? data.data : null
+        };
         setMessages((prev) => [...prev, systemMessage]);
       } else {
         showAlert(data.message || 'Error en la operación');
@@ -50,46 +55,71 @@ const Chat = () => {
 
   return (
     <>
-    <div className="card shadow-sm p-3 mb-5 bg-body-tertiary rounded" >
-      <div className="card-body" style={{ height: '400px', overflowY: 'auto'}}>
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`d-flex mb-2 ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
-          >
+      <div className="card shadow-sm p-3 mb-5 bg-body-tertiary rounded w-100">
+        <div className="card-body" style={{ height: '400px', overflowY: 'auto'}}>
+          {messages.map((msg, index) => (
             <div
-              className={`p-2 rounded ${msg.sender === 'user' ? 'bg-primary text-white' : 'bg-secondary text-white'}`}
-              style={{ maxWidth: '75%' }}
+              key={index}
+              className={`d-flex mb-2 ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
             >
-              {msg.text}
+              <div
+                className={`p-2 rounded ${msg.sender === 'user' ? 'bg-primary text-white' : 'bg-secondary text-white'}`}
+                style={{ maxWidth: '75%' }}
+              >
+                {msg.text}
+                {msg.data && (
+                  <table className="table table-sm table-bordered mt-2 mb-0">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Estado</th>
+                        <th>Descripción</th>
+                        <th>Abogado</th>
+                        <th>Creado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {msg.data.map((item, idx) => (
+                        <tr key={idx}>
+                          <td>{item.id}</td>
+                          <td>{item.title}</td>
+                          <td>{item.status}</td>
+                          <td>{item.description}</td>
+                          <td>{item.attorney}</td>
+                          <td>{new Date(item.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
+          ))}
+          <div ref={messagesEndRef}></div>
+        </div>
+
+        {alert && (
+          <div className="alert alert-danger m-3" role="alert">
+            {alert}
           </div>
-        ))}
-        <div ref={messagesEndRef}></div>
+        )}
+
+        <form onSubmit={handleSubmit} className="card-footer">
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Escribe tu mensaje..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <button className="btn btn-primary" type="submit">
+              Enviar
+            </button>
+          </div>
+        </form>
       </div>
-
-      {alert && (
-        <div className="alert alert-danger m-3" role="alert">
-          {alert}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="card-footer">
-        <div className="input-group">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Escribe tu mensaje..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <button className="btn btn-primary" type="submit">
-            Enviar
-          </button>
-        </div>
-      </form>
-      </div>
-
     </>
   );
 };
